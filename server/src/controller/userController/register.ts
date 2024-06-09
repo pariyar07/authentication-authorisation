@@ -1,7 +1,7 @@
-import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
 import User from '../../models/User';
+import { signToken } from '../../utils/jwtUtils';
 
 const userRegister = async (req: Request, res: Response) => {
   const { firstName, lastName, role, email, password } = req.body;
@@ -12,10 +12,7 @@ const userRegister = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Email already exists!' });
     }
 
-    const secretKey = process.env.JWT_SECRET_KEY as string;
-    const token = jwt.sign({ email: email }, secretKey, {
-      expiresIn: '1h',
-    });
+    const token = signToken({ email: email });
 
     // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -32,7 +29,6 @@ const userRegister = async (req: Request, res: Response) => {
     // Save user to database
     await User.create(newUser);
 
-    // Response to user
     res.status(201).json({
       message: 'User registered successfully!',
       user: { firstName, lastName, role, email, token },
